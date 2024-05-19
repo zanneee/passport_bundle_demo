@@ -1,0 +1,158 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container w-75 p-3">
+
+    <!-- <button type="button" id="login" class="btn btn-dark">Login</button> -->
+    <img src="https://docs.immutable.com/img/products/passport/passport_btn_signin_dark_small.svg" id="login"
+      style="cursor: pointer">
+    <button type="button" id="getUserInfo" class="btn btn-primary">Get User Info</button>
+    <button type="button" id="getAccesToken" class="btn btn-primary">Get Access Token</button>
+    <button type="button" id="getIdToken" class="btn btn-primary">Get ID Token</button>
+    <button type="button" id="getUserInfoAPI" class="btn btn-primary">Get User Info by API</button>
+    <button type="button" id="logout" class="btn btn-primary">Log out</button>
+    <button type="button" id="clear" class="btn btn-primary">Clear</button>
+
+
+    <br><br>
+    <div class="form-group">
+      <br>
+      <textarea class="form-control" id="txtResult" rows=20></textarea>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@imtbl/sdk"></script>
+  <script>
+
+    var passport = immutable.passport;
+    var config = immutable.config;
+
+    var passportInstance = new passport.Passport({
+      baseConfig: {
+        environment: config.Environment.SANDBOX, // or Environment.PRODUCTION 
+        publishableKey: '<%= passportConfig.publishable_key %>', // replace with your publishable API key from Hub
+      },
+      clientId: '<%= passportConfig.client_id %>', // replace with your client ID from Hub
+      redirectUri: '<%= passportConfig.redirect_url %>', // replace with one of your redirect URIs from Hub
+      logoutRedirectUri: '<%= passportConfig.logout_url %>', // replace with one of your logout URIs from Hub
+      logoutMode: 'redirect', // redirct / slient
+      audience: 'platform_api',
+      scope: 'openid offline_access email transact',
+      popupOverlayOptions: {
+        disableGenericPopupOverlay: false, // Set to true to disable the generic pop-up overlay
+        disableBlockedPopupOverlay: false, // Set to true to disable the blocked pop-up overlay
+      }
+    });
+
+    console.log('window.location.origin: ', window.location.origin);
+
+
+    async function passportLogin() {
+      try {
+        const passportProvider = passportInstance.connectEvm();
+        const accounts = await passportProvider.request({ method: "eth_requestAccounts" });
+        
+        document.getElementById("txtResult").innerHTML += "\n" + 'Login successful';
+        document.getElementById("txtResult").innerHTML += "\n" + 'passportProvider: ' + "\n" + JSON.stringify(passportProvider, null, 2);
+        document.getElementById("txtResult").innerHTML += "\n" + 'accounts: ' + "\n" + JSON.stringify(accounts, null, 2);
+      }
+      catch (error) {
+        console.error('Login error:', error);
+      }
+    }
+
+    async function passportLogout() {
+      try {
+        await passportInstance.logout();
+        console.log('Logout successful');
+      }
+      catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+
+    async function getUserInfo() {
+
+      const userProfile = await passportInstance.getUserInfo();
+      const linkedAddresses = await passportInstance.getLinkedAddresses();
+
+      document.getElementById("txtResult").innerHTML += "\n" + 'User Profile: ' + "\n" + JSON.stringify(userProfile, null, 2);
+      document.getElementById("txtResult").innerHTML += "\n" + 'User Linked Address: ' + "\n" + JSON.stringify(linkedAddresses, null, 2);
+    }
+
+    async function getAccesToken() {
+
+      const accessToken = await passportInstance.getAccessToken();
+
+      document.getElementById("txtResult").innerHTML += "\n" + 'Access Token: ' + JSON.stringify(accessToken);
+    }
+
+    async function getIdToken() {
+
+      const idToken = await passportInstance.getIdToken();
+
+      document.getElementById("txtResult").innerHTML += "\n" + 'ID Token: ' + JSON.stringify(idToken);
+    }
+
+    async function getUserInfoByAPI() {
+
+      const accessToken = await passportInstance.getAccessToken();
+
+      try {
+        const response = await fetch('<%= passportConfig.base_url %>' + '/passport-profile/v1/user/info', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + accessToken
+          }
+        });
+
+        const result = await response.json();
+        document.getElementById("txtResult").innerHTML += "\n" + 'User Info by API:' + "\n" + JSON.stringify(result, null, 2);
+
+      } catch (error) {
+        console.error("API calling Error: ", error);
+      }
+    }
+
+
+    window.addEventListener('load', function () {
+      passportInstance.loginCallback();
+    });
+
+    var login = document.getElementById("login");
+    login.addEventListener('click', passportLogin);
+
+    var login = document.getElementById("logout");
+    login.addEventListener('click', passportLogout);
+
+    var userinfo = document.getElementById("getUserInfo");
+    userinfo.addEventListener('click', getUserInfo);
+
+    var accessToken = document.getElementById("getAccesToken");
+    accessToken.addEventListener('click', getAccesToken);
+
+    var idToken = document.getElementById("getIdToken");
+    idToken.addEventListener('click', getIdToken);
+
+    var getUserInfoAPI = document.getElementById("getUserInfoAPI");
+    getUserInfoAPI.addEventListener('click', getUserInfoByAPI);
+
+    document.getElementById("clear").addEventListener('click', () => {
+      document.getElementById("txtResult").innerHTML = ""
+    });
+
+
+
+  </script>
+
+</body>
+
+</html>
