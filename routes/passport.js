@@ -1,8 +1,7 @@
 var express = require("express");
 var router = express.Router();
 
-const env = "Immutable_zkevm_testnet"; //Immutable_zkevm_testnet, Immutable_zkevm_mainnet
-const passportConfig = require("../config.js")[env];
+const passportConfig = require("../config.js")[process.env.IMTBL_ENVIROMENT];
 
 // passport
 router.get("/", async (req, res) => {
