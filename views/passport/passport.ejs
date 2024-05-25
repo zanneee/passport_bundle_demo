@@ -19,7 +19,6 @@
     <button type="button" id="logout" class="btn btn-primary">Log out</button>
     <button type="button" id="clear" class="btn btn-primary">Clear</button>
 
-
     <br><br>
     <div class="form-group">
       <br>
@@ -33,10 +32,20 @@
 
     var passport = immutable.passport;
     var config = immutable.config;
+    var passportEnv;
+
+    switch ('<%= passportConfig.env %>') {
+      case "MAINNET":
+        passportEnv = config.Environment.PRODUCTION;
+        break;
+      case "TESTNET":
+      default:
+        passportEnv = config.Environment.SANDBOX;
+    }
 
     var passportInstance = new passport.Passport({
       baseConfig: {
-        environment: config.Environment.SANDBOX, // or Environment.PRODUCTION 
+        environment: passportEnv, // or Environment.PRODUCTION 
         publishableKey: '<%= passportConfig.publishable_key %>', // replace with your publishable API key from Hub
       },
       clientId: '<%= passportConfig.client_id %>', // replace with your client ID from Hub
@@ -58,7 +67,7 @@
       try {
         const passportProvider = passportInstance.connectEvm();
         const accounts = await passportProvider.request({ method: "eth_requestAccounts" });
-        
+
         document.getElementById("txtResult").innerHTML += "\n" + 'Login successful';
         document.getElementById("txtResult").innerHTML += "\n" + 'passportProvider: ' + "\n" + JSON.stringify(passportProvider, null, 2);
         document.getElementById("txtResult").innerHTML += "\n" + 'accounts: ' + "\n" + JSON.stringify(accounts, null, 2);
@@ -122,34 +131,19 @@
       }
     }
 
+    // Adding event for Redirect 
+    window.addEventListener('load', function () { passportInstance.loginCallback() });
 
-    window.addEventListener('load', function () {
-      passportInstance.loginCallback();
-    });
-
-    var login = document.getElementById("login");
-    login.addEventListener('click', passportLogin);
-
-    var login = document.getElementById("logout");
-    login.addEventListener('click', passportLogout);
-
-    var userinfo = document.getElementById("getUserInfo");
-    userinfo.addEventListener('click', getUserInfo);
-
-    var accessToken = document.getElementById("getAccesToken");
-    accessToken.addEventListener('click', getAccesToken);
-
-    var idToken = document.getElementById("getIdToken");
-    idToken.addEventListener('click', getIdToken);
-
-    var getUserInfoAPI = document.getElementById("getUserInfoAPI");
-    getUserInfoAPI.addEventListener('click', getUserInfoByAPI);
-
+    // Adding event for buttons
+    document.getElementById("login").addEventListener('click', passportLogin);
+    document.getElementById("logout").addEventListener('click', passportLogout);
+    document.getElementById("getUserInfo").addEventListener('click', getUserInfo);
+    document.getElementById("getAccesToken").addEventListener('click', getAccesToken);
+    document.getElementById("getIdToken").addEventListener('click', getIdToken);
+    document.getElementById("getUserInfoAPI").addEventListener('click', getUserInfoByAPI);
     document.getElementById("clear").addEventListener('click', () => {
       document.getElementById("txtResult").innerHTML = ""
     });
-
-
 
   </script>
 
