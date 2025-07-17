@@ -9,7 +9,6 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/redirect", async (req, res) => {
-  //res.render("passport/passport", { code: req.query.code, state: req.query.state });
   res.render("passport/passport", { passportConfig });
 });
 
